@@ -248,7 +248,7 @@ impl<'de, R: Read<'de>> Deserializer<R> {
     fn parse_whitespace(&mut self) -> Result<Option<u8>> {
         loop {
             match tri!(self.peek()) {
-                Some(b' ') | Some(b'\n') | Some(b'\t') | Some(b'\r') | Some(b',') => {
+                Some(b' ') | Some(b'\n') | Some(b'\t') | Some(b'\r') => {
                     self.eat_char();
                 }
                 other => {
@@ -1805,12 +1805,22 @@ impl<'de, 'a, R: Read<'de>> de::Deserializer<'de> for &'a mut Deserializer<R> {
     where
         V: de::Visitor<'de>,
     {
-        let peek = match tri!(self.parse_whitespace()) {
+        let mut peek = match tri!(self.parse_whitespace()) {
             Some(b) => b,
             None => {
                 return Err(self.peek_error(ErrorCode::EofWhileParsingValue));
             }
         };
+
+        if peek == b',' {
+            self.eat_char();
+            peek = match tri!(self.parse_whitespace()) {
+                Some(b) => b,
+                None => {
+                    return Err(self.peek_error(ErrorCode::EofWhileParsingValue));
+                }
+            };
+        }
 
         let value = match peek {
             b'[' => {
