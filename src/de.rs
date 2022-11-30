@@ -301,7 +301,7 @@ impl<'de, R: Read<'de>> Deserializer<R> {
                     Err(err) => return err,
                 }
             }
-            b'[' => de::Error::invalid_type(Unexpected::Seq, exp),
+            b'[' | b']' => de::Error::invalid_type(Unexpected::Seq, exp),
             b'{' => de::Error::invalid_type(Unexpected::Map, exp),
             _ => self.peek_error(ErrorCode::ExpectedSomeValue),
         };
